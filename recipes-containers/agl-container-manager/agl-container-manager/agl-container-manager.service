@@ -1,0 +1,11 @@
+[Unit]
+Description=AGL Container Manager
+After=lxc-net.service vcancreate.service
+Wants=lxc-net.service vcancreate.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/aglcontainermanager
+
+[Install]
+WantedBy=multi-user.target
