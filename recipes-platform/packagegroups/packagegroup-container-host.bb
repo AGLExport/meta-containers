@@ -11,7 +11,8 @@ PACKAGES = "\
 ALLOW_EMPTY_${PN} = "1"
 
 RDEPENDS_${PN} += "\
-    lxc \
+    lxc lxc-bridge-setup \
+    iproute2 \
     agl-container-manager \
 "
 
