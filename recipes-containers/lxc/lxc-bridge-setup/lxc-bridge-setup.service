@@ -1,0 +1,12 @@
+[Unit]
+Description=LXC Bridge setup
+After=network-online.target network.target systemd-resolved.service
+Before=agl-container-manager.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/libexec/lxc-bridge-setup
+
+[Install]
+WantedBy=multi-user.target
