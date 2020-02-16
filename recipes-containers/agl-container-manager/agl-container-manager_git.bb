@@ -31,10 +31,11 @@ do_install_append() {
 #	install -m 0644 ${WORKDIR}/musl.json ${D}/lxc/conf
 
 	install -d ${D}/lxc/guests/
-
+	install -d ${D}/lxc/share/
+	
 	install -d ${D}/lib/systemd/system
 	install -m 0644 ${WORKDIR}/agl-container-manager.service ${D}/lib/systemd/system
 }
 
-FILES_${PN} += " ${systemd_unitdir} /lxc/conf/* /lxc/conf /lxc/guests "
+FILES_${PN} += " ${systemd_unitdir} /lxc/conf/* /lxc/conf /lxc/guests /lxc/share "
 
