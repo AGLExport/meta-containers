@@ -12,7 +12,7 @@ ALLOW_EMPTY_${PN} = "1"
 
 RDEPENDS_${PN} += "\
     lxc lxc-bridge-setup \
-    iproute2 can-utils \
     agl-container-manager \
+    drm-lease-manager \
 "
 
