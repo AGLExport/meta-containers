@@ -6,7 +6,7 @@ LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/BSD;md5=3775480a712fc46a6964767
 inherit systemd
 
 RDEPENDS_${PN} = " \
-		bridge-utils \
+		iproute2 \
 "
 
 SRC_URI = " \
