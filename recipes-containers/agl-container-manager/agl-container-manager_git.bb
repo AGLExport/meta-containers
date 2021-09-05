@@ -7,7 +7,7 @@ PV = "0.1.0+rev${SRCPV}"
 
 DEPENDS = "jsoncpp"
 
-SRCREV = "46f7dbab168e8a82aeb3183239f1e90adf8e872c"
+SRCREV = "3aa06a1ee4e6d8ce54818ba778b342731e255a4f"
 SRC_URI = "git://github.com/AGLExport/agl-container-manager.git \
           "
 
