@@ -1,4 +1,4 @@
-From 68b0dd97130ffc5776de9219a42188b4a140d446 Mon Sep 17 00:00:00 2001
+From b30643c37d0d64a15d15026ac94e548cae8a88d2 Mon Sep 17 00:00:00 2001
 From: Mark Asselstine <mark.asselstine@windriver.com>
 Date: Thu, 31 May 2018 16:21:45 -0400
 Subject: [PATCH] templates: actually create DOWNLOAD_TEMP directory
@@ -23,12 +23,12 @@ Signed-off-by: Mark Asselstine <mark.asselstine@windriver.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/templates/lxc-download.in b/templates/lxc-download.in
-index 973783b..015a679 100644
+index 4cb2129..923d2a1 100644
 --- a/templates/lxc-download.in
 +++ b/templates/lxc-download.in
-@@ -323,7 +323,7 @@ elif [ -n "${DOWNLOAD_TEMP}" ]; then
+@@ -329,7 +329,7 @@ elif [ -n "${DOWNLOAD_TEMP}" ]; then
    mkdir -p "${DOWNLOAD_TEMP}"
-   DOWNLOAD_TEMP="$(mktemp -p ${DOWNLOAD_TEMP} -d)"
+   DOWNLOAD_TEMP="$(mktemp -p "${DOWNLOAD_TEMP}" -d)"
  else
 -  DOWNLOAD_TEMP="${DOWNLOAD_TEMP}$(mktemp -d)"
 +  DOWNLOAD_TEMP="$(mktemp -p ${DOWNLOAD_TEMP} -d)"

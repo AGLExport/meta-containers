@@ -1,7 +1,10 @@
 DESCRIPTION = "lxc aims to use these new functionnalities to provide an userspace container object"
 SECTION = "console/utils"
-LICENSE = "LGPLv2.1"
-LIC_FILES_CHKSUM = "file://COPYING;md5=4fbd65380cdd255951079008b364516c"
+LICENSE = "LGPLv2.1 & GPLv2"
+LIC_FILES_CHKSUM = "file://LICENSE.LGPL2.1;md5=4fbd65380cdd255951079008b364516c \
+                    file://LICENSE.GPL2;md5=751419260aa954499f7abaabaa882bbe \
+"
+
 DEPENDS = "libxml2 libcap"
 RDEPENDS_${PN} = " \
 		rsync \
@@ -33,7 +36,7 @@ RDEPENDS_${PN}-ptest += "file make gmp nettle gnutls bash libgcc"
 
 RDEPENDS_${PN}-networking += "iptables"
 
-SRC_URI = "http://linuxcontainers.org/downloads/${BPN}-${PV}.tar.gz \
+SRC_URI = "http://linuxcontainers.org/downloads/${BPN}/${BPN}-${PV}.tar.gz \
 	file://lxc-1.0.0-disable-udhcp-from-busybox-template.patch \
 	file://run-ptest \
 	file://lxc-fix-B-S.patch \
@@ -44,13 +47,16 @@ SRC_URI = "http://linuxcontainers.org/downloads/${BPN}-${PV}.tar.gz \
 	file://templates-use-curl-instead-of-wget.patch \
 	file://tests-our-init-is-not-busybox.patch \
 	file://tests-add-no-validate-when-using-download-template.patch \
-	file://network-restore-ability-to-move-nl80211-devices.patch \
 	file://dnsmasq.conf \
 	file://lxc-net \
+	file://configure-skip-libseccomp-tests-if-it-is-disabled.patch \
+	file://commands-fix-check-for-seccomp-notify-support.patch \
 	"
 
-SRC_URI[md5sum] = "4886c8d1c8e221fe526eefcb47857b85"
-SRC_URI[sha256sum] = "5f903986a4b17d607eea28c0aa56bf1e76e8707747b1aa07d31680338b1cc3d4"
+SRC_URI[md5sum] = "732571c7cb4ab845068afb227bf35256"
+SRC_URI[sha256sum] = "9165dabc0bb6ef7f2fda2009aee90b20fbefe77ed8008347e9f06048eba1e463"
+
+
 
 S = "${WORKDIR}/${BPN}-${PV}"
 
@@ -63,9 +69,7 @@ EXTRA_OECONF += "--with-init-script=\
 ${@bb.utils.contains('DISTRO_FEATURES', 'sysvinit', 'sysvinit,', '', d)}\
 ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'systemd', '', d)}"
 
-EXTRA_OECONF += "--enable-log-src-basename"
-
-CFLAGS_append = " -Wno-error=deprecated-declarations"
+EXTRA_OECONF += "--enable-log-src-basename --disable-werror"
 
 PACKAGECONFIG ??= "templates \
     ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'systemd', '', d)} \
@@ -119,8 +123,8 @@ FILES_${PN}-networking += " \
 
 CACHED_CONFIGUREVARS += " \
     ac_cv_path_PYTHON='${STAGING_BINDIR_NATIVE}/python3-native/python3' \
-    am_cv_python_pyexecdir='${exec_prefix}/${libdir}/python3.5/site-packages' \
-    am_cv_python_pythondir='${prefix}/${libdir}/python3.5/site-packages' \
+    am_cv_python_pyexecdir='${PYTHON_SITEPACKAGES_DIR}' \
+    am_cv_python_pythondir='${PYTHON_SITEPACKAGES_DIR}' \
 "
 
 do_install_append() {
@@ -169,9 +173,9 @@ pkg_postinst_${PN}() {
 	fi
 }
 
-pkg_postinst_ontarget_${PN}-networking() {
+pkg_postinst_${PN}-networking() {
 if ${@bb.utils.contains('DISTRO_FEATURES', 'sysvinit', 'true', 'false', d)}; then
-cat >> /etc/network/interfaces << EOF
+cat >> $D/etc/network/interfaces << EOF
 
 auto lxcbr0
 iface lxcbr0 inet dhcp
@@ -180,7 +184,7 @@ iface lxcbr0 inet dhcp
 	bridge_maxwait 0
 EOF
 
-cat<<EOF>/etc/network/if-pre-up.d/lxcbr0
+cat<<EOF>$D/etc/network/if-pre-up.d/lxcbr0
 #! /bin/sh
 
 if test "x\$IFACE" = xlxcbr0 ; then
@@ -193,6 +197,6 @@ if test "x\$IFACE" = xlxcbr0 ; then
         fi
 fi
 EOF
-chmod 755 /etc/network/if-pre-up.d/lxcbr0
+chmod 755 $D/etc/network/if-pre-up.d/lxcbr0
 fi
 }
