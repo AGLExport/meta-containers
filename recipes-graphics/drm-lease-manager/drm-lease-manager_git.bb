@@ -7,11 +7,11 @@ SRC_URI = "git://gerrit.automotivelinux.org/gerrit/src/drm-lease-manager;protoco
            "
 
 PV = "0.1+git${SRCPV}"
-SRCREV = "53f4fe700dee88cc9840a91f2f297aacf05e08d4"
+SRCREV = "f20fa3f4f0a2698db38d993e3d0b86be58c41ef2"
 
 S = "${WORKDIR}/git"
 
-inherit meson
+inherit meson pkgconfig
 inherit systemd
 inherit ptest
 
@@ -21,13 +21,13 @@ do_install:append() {
     install -d ${D}/${systemd_unitdir}/system
     install -m 0644 ${WORKDIR}/drm-lease-manager.service ${D}/${systemd_unitdir}/system
     rm -rf ${D}/${localstatedir}
-
-    install -d ${D}/var/display/drm-lease-manager/
-    touch ${D}/var/display/drm-lease-manager/lease
 }
 
 SYSTEMD_SERVICE:${PN} = "drm-lease-manager.service"
 RDEPENDS:${PN} = "drm-lease-manager-init"
+
+PACKAGECONFIG ??= "${@bb.utils.filter('DISTRO_FEATURES', 'systemd', d)}"
+PACKAGECONFIG[systemd] = "-Denable-systemd=true,-Denable-systemd=false,systemd"
 
 EXTRA_OEMESON += "${@bb.utils.contains('PTEST_ENABLED', '1', '-Denable-tests=true', '', d)}"
 RDEPENDS:${PN}-ptest = "libcheck"
@@ -39,7 +39,4 @@ do_install_ptest() {
 }
 
 PACKAGES =+ "libdlmclient"
-FILES:libdlmclient = " \
-    ${libdir}/libdlmclient${SOLIBS} \
-    /var/display/drm-lease-manager/lease \
-    "
+FILES:libdlmclient = "${libdir}/libdlmclient${SOLIBS}"
