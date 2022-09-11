@@ -1,12 +1,12 @@
 DESCRIPTION = "lxc aims to use these new functionnalities to provide an userspace container object"
 SECTION = "console/utils"
-LICENSE = "LGPLv2.1 & GPLv2"
+LICENSE = "LGPL-2.1 & GPL-2.0"
 LIC_FILES_CHKSUM = "file://LICENSE.LGPL2.1;md5=4fbd65380cdd255951079008b364516c \
                     file://LICENSE.GPL2;md5=751419260aa954499f7abaabaa882bbe \
 "
 
 DEPENDS = "libxml2 libcap"
-RDEPENDS_${PN} = " \
+RDEPENDS:${PN} = " \
 		rsync \
 		curl \
 		gzip \
@@ -30,58 +30,58 @@ RDEPENDS_${PN} = " \
 		util-linux-getopt \
 "
 
-RDEPENDS_${PN}_append_libc-glibc = " glibc-utils"
+RDEPENDS:${PN}:append:libc-glibc = " glibc-utils"
 
-RDEPENDS_${PN}-ptest += "file make gmp nettle gnutls bash libgcc"
+RDEPENDS:${PN}-ptest += "file make gmp nettle gnutls bash libgcc"
 
-RDEPENDS_${PN}-networking += "iptables"
+RDEPENDS:${PN}-networking += "iptables"
 
-SRC_URI = "http://linuxcontainers.org/downloads/${BPN}/${BPN}-${PV}.tar.gz \
+SRC_URI = "git://github.com/lxc/lxc.git;branch=stable-5.0;protocol=https \
 	file://lxc-1.0.0-disable-udhcp-from-busybox-template.patch \
 	file://run-ptest \
-	file://lxc-fix-B-S.patch \
-	file://lxc-doc-upgrade-to-use-docbook-3.1-DTD.patch \
-	file://logs-optionally-use-base-filenames-to-report-src-fil.patch \
 	file://templates-actually-create-DOWNLOAD_TEMP-directory.patch \
 	file://template-make-busybox-template-compatible-with-core-.patch \
 	file://templates-use-curl-instead-of-wget.patch \
+	file://0001-download-don-t-try-compatbility-index.patch \
 	file://tests-our-init-is-not-busybox.patch \
-	file://tests-add-no-validate-when-using-download-template.patch \
+	file://0001-use-sd_bus_call_method_async-to-replace-the-asyncv-o.patch \
 	file://dnsmasq.conf \
 	file://lxc-net \
-	file://configure-skip-libseccomp-tests-if-it-is-disabled.patch \
-	file://commands-fix-check-for-seccomp-notify-support.patch \
 	"
 
-SRC_URI[md5sum] = "732571c7cb4ab845068afb227bf35256"
-SRC_URI[sha256sum] = "9165dabc0bb6ef7f2fda2009aee90b20fbefe77ed8008347e9f06048eba1e463"
+SRCREV = "0539095ac7130559093360c81cff8979f0de88e6"
+PV = "5.0.1"
 
-
-
-S = "${WORKDIR}/${BPN}-${PV}"
+S = "${WORKDIR}/git"
 
 # Let's not configure for the host distro.
 #
-PTEST_CONF = "${@bb.utils.contains('DISTRO_FEATURES', 'ptest', '--enable-tests', '', d)}"
-EXTRA_OECONF += "--with-distro=${DISTRO} ${PTEST_CONF}"
+PTEST_CONF = "${@bb.utils.contains('DISTRO_FEATURES', 'ptest', '-Dtests=true', '', d)}"
 
-EXTRA_OECONF += "--with-init-script=\
-${@bb.utils.contains('DISTRO_FEATURES', 'sysvinit', 'sysvinit,', '', d)}\
-${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'systemd', '', d)}"
-
-EXTRA_OECONF += "--enable-log-src-basename --disable-werror"
+# No meson equivalent for --with-distro
+# EXTRA_OECONF += "--with-distro=${DISTRO} ${PTEST_CONF}"
+EXTRA_OEMESON += "${PTEST_CONF}"
+# No meson equivalent for these yet
+# EXTRA_OECONF += "--enable-log-src-basename --disable-werror"
 
 PACKAGECONFIG ??= "templates \
     ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'systemd', '', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'selinux', 'selinux', '', d)} \
+    ${@bb.utils.contains('DISTRO_FEATURES', 'seccomp', 'seccomp', '', d)} \
 "
-PACKAGECONFIG[doc] = "--enable-doc --enable-api-docs,--disable-doc --disable-api-docs,,"
-PACKAGECONFIG[rpath] = "--enable-rpath,--disable-rpath,,"
-PACKAGECONFIG[apparmor] = "--enable-apparmor,--disable-apparmor,apparmor,apparmor"
+
+# Meson doesn't seem to be as fine grained as the autotools releases
+# PACKAGECONFIG[doc] = "--enable-doc --enable-api-docs,--disable-doc --disable-api-docs,,"
+PACKAGECONFIG[doc] = "-Dman=true,-Dman=false,,"
+# No meson equiv found for rpath yet
+# PACKAGECONFIG[rpath] = "--enable-rpath,--disable-rpath,,"
+PACKAGECONFIG[apparmor] = "-Dapparmor=true,-Dapparmor=false,apparmor,apparmor"
 PACKAGECONFIG[templates] = ",,, ${PN}-templates"
-PACKAGECONFIG[selinux] = "--enable-selinux,--disable-selinux,libselinux,libselinux"
-PACKAGECONFIG[seccomp] ="--enable-seccomp,--disable-seccomp,libseccomp,libseccomp"
-PACKAGECONFIG[systemd] = "--with-systemdsystemunitdir=${systemd_unitdir}/system/,--without-systemdsystemunitdir,systemd,"
+PACKAGECONFIG[selinux] = "-Dselinux=true,-Dselinux=false,libselinux,libselinux"
+PACKAGECONFIG[seccomp] ="-Dseccomp=true,-Dseccomp=false,libseccomp,libseccomp"
+# meson equiv for the unitdir found yet
+# PACKAGECONFIG[systemd] = "--with-systemdsystemunitdir=${systemd_unitdir}/system/,--without-systemdsystemunitdir,systemd,"
+PACKAGECONFIG[systemd] = "-Dinit-script=systemd,-Dinit-script=sysvinit,systemd,"
 
 # required by python3 to run setup.py
 export BUILD_SYS
@@ -89,45 +89,46 @@ export HOST_SYS
 export STAGING_INCDIR
 export STAGING_LIBDIR
 
-inherit autotools pkgconfig ptest update-rc.d systemd python3native
+inherit meson pkgconfig ptest update-rc.d systemd python3native
 
 SYSTEMD_PACKAGES = "${PN} ${PN}-networking"
-SYSTEMD_SERVICE_${PN} = "lxc.service"
-SYSTEMD_AUTO_ENABLE_${PN} = "disable"
-SYSTEMD_SERVICE_${PN}-networking = "lxc-net.service"
-SYSTEMD_AUTO_ENABLE_${PN}-networking = "enable"
+SYSTEMD_SERVICE:${PN} = "lxc.service lxc-monitord.service"
+SYSTEMD_AUTO_ENABLE:${PN} = "disable"
+SYSTEMD_SERVICE:${PN}-networking = "lxc-net.service"
+SYSTEMD_AUTO_ENABLE:${PN}-networking = "enable"
 
-INITSCRIPT_PACKAGES = "${PN} ${PN}-networking"
-INITSCRIPT_NAME_${PN} = "lxc-containers"
-INITSCRIPT_PARAMS_${PN} = "defaults"
-INITSCRIPT_NAME_${PN}-networking = "lxc-net"
-INITSCRIPT_PARAMS_${PN}-networking = "defaults"
+INITSCRIPT_PACKAGES = "${@bb.utils.contains('DISTRO_FEATURES', 'systemd', '', '${PN}', d)} ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', '', '${PN}-networking',d)}"
+INITSCRIPT_NAME:${PN} = "${@bb.utils.contains('DISTRO_FEATURES', 'systemd', '', 'lxc-containers', d)}"
+INITSCRIPT_PARAMS:${PN} = "defaults"
+INITSCRIPT_NAME:${PN}-networking = "${@bb.utils.contains('DISTRO_FEATURES', 'systemd', '', 'lxc-net', d)}"
+INITSCRIPT_PARAMS:${PN}-networking = "defaults"
 
-FILES_${PN}-doc = "${mandir} ${infodir}"
+FILES:${PN}-doc = "${mandir} ${infodir}"
 # For LXC the docdir only contains example configuration files and should be included in the lxc package
-FILES_${PN} += "${docdir}"
-FILES_${PN} += "${libdir}/python3*"
-FILES_${PN} += "${datadir}/bash-completion"
-FILES_${PN}-dbg += "${libexecdir}/lxc/.debug"
-FILES_${PN}-dbg += "${libexecdir}/lxc/hooks/.debug"
+FILES:${PN} += "${docdir}"
+FILES:${PN} += "${libdir}/python3*"
+FILES:${PN} += "${datadir}/bash-completion"
+FILES:${PN}-dbg += "${libexecdir}/lxc/.debug"
+FILES:${PN}-dbg += "${libexecdir}/lxc/hooks/.debug"
 PACKAGES =+ "${PN}-templates ${PN}-networking ${PN}-lua"
-FILES_lua-${PN} = "${datadir}/lua ${libdir}/lua"
-FILES_lua-${PN}-dbg += "${libdir}/lua/lxc/.debug"
-FILES_${PN}-templates += "${datadir}/lxc/templates"
-RDEPENDS_${PN}-templates += "bash"
+FILES:lua-${PN} = "${datadir}/lua ${libdir}/lua"
+FILES:lua-${PN}-dbg += "${libdir}/lua/lxc/.debug"
+FILES:${PN}-templates += "${datadir}/lxc/templates"
+RDEPENDS:${PN}-templates += "bash"
 
-FILES_${PN}-networking += " \
+FILES:${PN}-networking += " \
     ${sysconfdir}/init.d/lxc-net \
     ${sysconfdir}/default/lxc-net \
 "
 
-CACHED_CONFIGUREVARS += " \
-    ac_cv_path_PYTHON='${STAGING_BINDIR_NATIVE}/python3-native/python3' \
-    am_cv_python_pyexecdir='${PYTHON_SITEPACKAGES_DIR}' \
-    am_cv_python_pythondir='${PYTHON_SITEPACKAGES_DIR}' \
-"
+# Not needed for meson
+# CACHED_CONFIGUREVARS += " \
+#     ac_cv_path_PYTHON='${STAGING_BINDIR_NATIVE}/python3-native/python3' \
+#     am_cv_python_pyexecdir='${PYTHON_SITEPACKAGES_DIR}' \
+#     am_cv_python_pythondir='${PYTHON_SITEPACKAGES_DIR}' \
+#"
 
-do_install_append() {
+do_install:append() {
 	# The /var/cache/lxc directory created by the Makefile
 	# is wiped out in volatile, we need to create this at boot.
 	rm -rf ${D}${localstatedir}/cache
@@ -138,8 +139,15 @@ do_install_append() {
 	for i in `grep -l "#! */bin/bash" ${D}${datadir}/lxc/hooks/*`; do \
 	    sed -e 's|#! */bin/bash|#!/bin/sh|' -i $i; done
 
-	install -d ${D}${sysconfdir}/init.d
-	install -m 755 config/init/sysvinit/lxc* ${D}${sysconfdir}/init.d
+	if "${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}"; then
+	    # nothing special for systemd at the moment
+	    true
+	else
+	    # with meson, these aren't built unless sysvinit is the enabled
+	    # init system.
+	    install -d ${D}${sysconfdir}/init.d
+	    install -m 755 config/init/sysvinit/lxc* ${D}${sysconfdir}/init.d
+	fi
 
 	# since python3-native is used for install location this will not be
 	# suitable for the target and we will have to correct the package install
@@ -167,13 +175,13 @@ do_install_ptest() {
 	mv ${D}/usr/bin/lxc-test-* ${D}/${PTEST_PATH}/tests/.
 }
 
-pkg_postinst_${PN}() {
+pkg_postinst:${PN}() {
 	if [ -z "$D" ] && [ -e /etc/init.d/populate-volatile.sh ] ; then
 		/etc/init.d/populate-volatile.sh update
 	fi
 }
 
-pkg_postinst_${PN}-networking() {
+pkg_postinst:${PN}-networking() {
 if ${@bb.utils.contains('DISTRO_FEATURES', 'sysvinit', 'true', 'false', d)}; then
 cat >> $D/etc/network/interfaces << EOF
 

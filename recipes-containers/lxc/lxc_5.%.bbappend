@@ -8,5 +8,3 @@ SYSTEMD_AUTO_ENABLE_${PN}-networking = "disable"
 
 RDEPENDS_${PN} = ""
 
-
-
