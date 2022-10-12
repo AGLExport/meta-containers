@@ -40,3 +40,6 @@ do_install_ptest() {
 
 PACKAGES =+ "libdlmclient"
 FILES:libdlmclient = "${libdir}/libdlmclient${SOLIBS}"
+
+#ENABLE_BINARY_ONLY_DEPLOY = "1"
+inherit binary-only
